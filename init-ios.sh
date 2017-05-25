@@ -1,5 +1,6 @@
 #! /usr/bin/env bash
 #
+# Copyright (C) 2013-2015 Bilibili
 # Copyright (C) 2013-2015 Zhang Rui <bbcallen@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +19,22 @@
 # IJK_FFMPEG_UPSTREAM=git://git.videolan.org/ffmpeg.git
 IJK_FFMPEG_UPSTREAM=https://github.com/Bilibili/FFmpeg.git
 IJK_FFMPEG_FORK=https://github.com/Bilibili/FFmpeg.git
-IJK_FFMPEG_COMMIT=ff2.8--ijk0.4.4.1--dev0.3.3--rc6
+IJK_FFMPEG_COMMIT=ff3.3--ijk0.8.0--20170518--001
 IJK_FFMPEG_LOCAL_REPO=extra/ffmpeg
+
+IJK_GASP_UPSTREAM=https://github.com/Bilibili/gas-preprocessor.git
 
 # gas-preprocessor backup
 # https://github.com/Bilibili/gas-preprocessor.git
+
+if [ "$IJK_FFMPEG_REPO_URL" != "" ]; then
+    IJK_FFMPEG_UPSTREAM=$IJK_FFMPEG_REPO_URL
+    IJK_FFMPEG_FORK=$IJK_FFMPEG_REPO_URL
+fi
+
+if [ "$IJK_GASP_REPO_URL" != "" ]; then
+    IJK_GASP_UPSTREAM=$IJK_GASP_REPO_URL
+fi
 
 set -e
 TOOLS=tools
@@ -38,8 +50,9 @@ function echo_ffmpeg_version() {
 }
 
 function pull_common() {
+    git --version
     echo "== pull gas-preprocessor base =="
-    sh $TOOLS/pull-repo-base.sh https://github.com/Bilibili/gas-preprocessor.git extra/gas-preprocessor
+    sh $TOOLS/pull-repo-base.sh $IJK_GASP_UPSTREAM extra/gas-preprocessor
 
     echo "== pull ffmpeg base =="
     sh $TOOLS/pull-repo-base.sh $IJK_FFMPEG_UPSTREAM $IJK_FFMPEG_LOCAL_REPO
@@ -60,6 +73,10 @@ function pull_fork_all() {
     done
 }
 
+function sync_ff_version() {
+    sed -i '' "s/static const char \*kIJKFFRequiredFFmpegVersion\ \=\ .*/static const char *kIJKFFRequiredFFmpegVersion = \"${IJK_FFMPEG_COMMIT}\";/g" ios/IJKMediaPlayer/IJKMediaPlayer/IJKFFMoviePlayerController.m
+}
+
 #----------
 case "$FF_TARGET" in
     ffmpeg-version)
@@ -74,3 +91,6 @@ case "$FF_TARGET" in
         pull_fork_all
     ;;
 esac
+
+sync_ff_version
+
